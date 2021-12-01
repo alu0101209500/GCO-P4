@@ -1,0 +1,11 @@
+form input {
+    display: block;
+}
+
+form select {
+    display: block;
+}
+
+table, th, td {
+    border: 1px solid black;
+  }
