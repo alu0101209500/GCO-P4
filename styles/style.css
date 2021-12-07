@@ -9,3 +9,15 @@ form select {
 table, th, td {
     border: 1px solid black;
   }
+
+
+
+.tablebackground {
+    background-color: white;
+}
+
+.cabecera th{
+    background-color: darkblue;
+    color: white;
+    font-weight: bold;
+}
