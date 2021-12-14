@@ -33,15 +33,18 @@ document.addEventListener("DOMContentLoaded", (_) => {
             } else {
                 swIndex = Number(document.getElementById("sw").value);
                 mod = cleanDocuments(docs);
+                rawdocs = mod;
                 mod = parseStopwords(mod, stepwords[swIndex]);
                 mod = stemDocuments(mod, stemdict[swIndex]);
+                rawdocs = stemDocuments(rawdocs, stemdict[swIndex]);
                 indexTerms(mod);
                 termList = indexTerms(mod);
                 TFvals = TF(mod);
                 IDFvals = IDF(mod, termList);
                 TF_IDFvals = TF_IDF(TFvals, IDFvals);
-                drawTables("outputComplete", mod, termList, TFvals, IDFvals, TF_IDFvals);
+                drawTables("outputComplete", rawdocs, mod, termList, TFvals, IDFvals, TF_IDFvals);
                 similMatrix = calculateSimilarities(TF_IDFvals);
+                drawSimilarities("outputComplete", similMatrix);
             }
         });
 
@@ -207,7 +210,8 @@ function TF_IDF(TFvals, IDFvals) {
     return result;
 }
 
-function drawTables(divid, inputDocs, termList, TFvals, IDFvals, TF_IDFvals) {
+function drawTables(divid, rawdocs, inputDocs, termList, TFvals, IDFvals, TF_IDFvals) {
+    console.log(rawdocs)
     let docs = [];
     docs.length = inputDocs.length;
     let str = "<br><br>";
@@ -225,9 +229,9 @@ function drawTables(divid, inputDocs, termList, TFvals, IDFvals, TF_IDFvals) {
         for(let j = 0; j < docs[i].length; j++) {
             let indexlist = "[";
             let auxarr = [];  
-            for(let k = 0; k < inputDocs[i].length; k++) {
+            for(let k = 0; k < rawdocs[i].length; k++) {
                 
-                if(docs[i][j] == inputDocs[i][k]) {
+                if(docs[i][j] == rawdocs[i][k]) {
                     auxarr.push(k);
                 }
             }
@@ -250,6 +254,7 @@ function drawTables(divid, inputDocs, termList, TFvals, IDFvals, TF_IDFvals) {
 }
 
 function calculateSimilarities(TF_IDFvals) {
+    console.log(TF_IDFvals)
     let lg = TF_IDFvals.length
     let result = [];
     result.length = lg;
@@ -264,18 +269,95 @@ function calculateSimilarities(TF_IDFvals) {
             if(i == j) {
                 result[i][j] = "-"
             } else {
-                result[i][j] = adjCos(TF_IDFvals[i], TF_IDFvals[j]);
-                result[j][i];
+                result[i][j] = String(adjCos(TF_IDFvals[i], TF_IDFvals[j]));
+                result[j][i] = result [i][j];
             }
         }
     }
-    console.log(result)
+    return result
 }
 
-function adjCos() {
+function adjAvg(item) {
+    let val = 0;
+    let total = 0;
 
+    for (let i = 0; i < item.length; i++) {
+        val += item[i][1];
+        total ++;
+    }
+    if(total == 0) {
+        return 0;
+    } else {
+        return val / total;
+    }
 }
 
+function adjCos(item1, item2) {
+    let U = [];
+    for(let i = 0; i < item1.length; i++) {
+        for(let j = 0; j < item2.length; j++) {
+            if(item1[i][0] == item2[j][0]) {
+                U.push(item1[i][0]);
+                break;
+            }
+        }
+    }
+    let t1 = 0;
+    let t2 = 0;
+    let t3 = 0;
+
+    for(let i = 0; i < U.length; i++) {    
+        let a = 0;
+        let b = 0;
+
+        for(let j = 0; j < item1.length; j++) {
+            if(U[i] == item1[j][0]) {
+                a = item1[j][1];
+                break;
+            }
+        }
+
+        for(let j = 0; j < item2.length; j++) {
+            if(U[i] == item2[j][0]) {
+                b = item2[j][1];
+                break;
+            }
+        }
+        t1 += (a-adjAvg(item1))*(b-adjAvg(item2));
+        t2 += Math.pow((a-adjAvg(item1)),2);
+        t3 += Math.pow((b-adjAvg(item2)),2);
+    }
+    
+    if(t2 == 0 || t3 == 0) {
+        return 0;
+    } else {
+        return (t1/(Math.sqrt(t2)*Math.sqrt(t3)));
+    }
+}
+
+function drawSimilarities(divid, similMatrix) {
+    
+    let str = "<br><br>";
+    str += "<h3>Matriz de similitud entre documentos</h3> <br> <table class=\"tablebackground\">";
+    str += `<tr class="cabecera"><th> / </th>`
+    
+    for(let i = 0; i < similMatrix.length; i++) {
+        str += '<th> Doc ' + String(i+1) + '</th>';
+    }
+    str += '</tr>'
+
+    for(let i = 0; i < similMatrix.length; i++) {
+        str += '<tr>';
+        str += '<th class="cabecerath"> Doc ' + String(i + 1) + '</th>'
+        for(let j = 0; j < similMatrix[i].length; j++) {
+            str += '<th>' + similMatrix[i][j] + '</th>';            
+        }
+        str += "</tr>";
+    }
+    str += '</table>'
+
+    document.getElementById(divid).innerHTML += str;
+}
 // CONSTANTES
 
 let strEng = "a@able@about@above@abroad@according@accordingly@across@actually@adj@after@afterwards@again@against@ago@ahead@ain't@all@allow@allows@almost@alone@along@alongside@already@also@although@always@am@amid@amidst@among@amongst@an@and@another@any@anybody@anyhow@anyone@anything@anyway@anyways@anywhere@apart@appear@appreciate@appropriate@are@aren't@around@as@a's@aside@ask@asking@associated@at@available@away@awfully@back@backward@backwards@be@became@because@become@becomes@becoming@been@before@beforehand@begin@behind@being@believe@below@beside@besides@best@better@between@beyond@both@brief@but@by@came@can@cannot@cant@can't@caption@cause@causes@certain@certainly@changes@clearly@c'mon@co@co.@com@come@comes@concerning@consequently@consider@considering@contain@containing@contains@corresponding@could@couldn't@course@c's@currently@dare@daren't@definitely@described@despite@did@didn't@different@directly@do@does@doesn't@doing@done@don't@down@downwards@during@each@edu@eg@eight@eighty@either@else@elsewhere@end@ending@enough@entirely@especially@et@etc@even@ever@evermore@every@everybody@everyone@everything@everywhere@ex@exactly@example@except@fairly@far@farther@few@fewer@fifth@first@five@followed@following@follows@for@forever@former@formerly@forth@forward@found@four@from@further@furthermore@get@gets@getting@given@gives@go@goes@going@gone@got@gotten@greetings@had@hadn't@half@happens@hardly@has@hasn't@have@haven't@having@he@he'd@he'll@hello@help@hence@her@here@hereafter@hereby@herein@here's@hereupon@hers@herself@he's@hi@him@himself@his@hither@hopefully@how@howbeit@however@hundred@i'd@ie@if@ignored@i'll@i'm@immediate@in@inasmuch@inc@inc.@indeed@indicate@indicated@indicates@inner@inside@insofar@instead@into@inward@is@isn't@it@it'd@it'll@its@it's@itself@i've@just@k@keep@keeps@kept@know@known@knows@last@lately@later@latter@latterly@least@less@lest@let@let's@like@liked@likely@likewise@little@look@looking@looks@low@lower@ltd@made@mainly@make@makes@many@may@maybe@mayn't@me@mean@meantime@meanwhile@merely@might@mightn't@mine@minus@miss@more@moreover@most@mostly@mr@mrs@much@must@mustn't@my@myself@name@namely@nd@near@nearly@necessary@need@needn't@needs@neither@never@neverf@neverless@nevertheless@new@next@nine@ninety@no@nobody@non@none@nonetheless@noone@no-one@nor@normally@not@nothing@notwithstanding@novel@now@nowhere@obviously@of@off@often@oh@ok@okay@old@on@once@one@ones@one's@only@onto@opposite@or@other@others@otherwise@ought@oughtn't@our@ours@ourselves@out@outside@over@overall@own@particular@particularly@past@per@perhaps@placed@please@plus@possible@presumably@probably@provided@provides@que@quite@qv@rather@rd@re@really@reasonably@recent@recently@regarding@regardless@regards@relatively@respectively@right@round@said@same@saw@say@saying@says@second@secondly@see@seeing@seem@seemed@seeming@seems@seen@self@selves@sensible@sent@serious@seriously@seven@several@shall@shan't@she@she'd@she'll@she's@should@shouldn't@since@six@so@some@somebody@someday@somehow@someone@something@sometime@sometimes@somewhat@somewhere@soon@sorry@specified@specify@specifying@still@sub@such@sup@sure@take@taken@taking@tell@tends@th@than@thank@thanks@thanx@that@that'll@thats@that's@that've@the@their@theirs@them@themselves@then@thence@there@thereafter@thereby@there'd@therefore@therein@there'll@there're@theres@there's@thereupon@there've@these@they@they'd@they'll@they're@they've@thing@things@think@third@thirty@this@thorough@thoroughly@those@though@three@through@throughout@thru@thus@till@to@together@too@took@toward@towards@tried@tries@truly@try@trying@t's@twice@two@un@under@underneath@undoing@unfortunately@unless@unlike@unlikely@until@unto@up@upon@upwards@us@use@used@useful@uses@using@usually@v@value@various@versus@very@via@viz@vs@want@wants@was@wasn't@way@we@we'd@welcome@well@we'll@went@were@we're@weren't@we've@what@whatever@what'll@what's@what've@when@whence@whenever@where@whereafter@whereas@whereby@wherein@where's@whereupon@wherever@whether@which@whichever@while@whilst@whither@who@who'd@whoever@whole@who'll@whom@whomever@who's@whose@why@will@willing@wish@with@within@without@wonder@won't@would@wouldn't@yes@yet@you@you'd@you'll@your@you're@yours@yourself@yourselves@you've@zero";
