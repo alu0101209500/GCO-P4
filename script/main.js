@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", (_) => {
         // Great success! All the File APIs are supported.
         let docs = [];
         let mod = [];
+        let similMatrix = [];
         let TFvals;
         let IDFvals;
         let TF_IDFvals;
@@ -40,6 +41,7 @@ document.addEventListener("DOMContentLoaded", (_) => {
                 IDFvals = IDF(mod, termList);
                 TF_IDFvals = TF_IDF(TFvals, IDFvals);
                 drawTables("outputComplete", mod, termList, TFvals, IDFvals, TF_IDFvals);
+                similMatrix = calculateSimilarities(TF_IDFvals);
             }
         });
 
@@ -221,10 +223,20 @@ function drawTables(divid, inputDocs, termList, TFvals, IDFvals, TF_IDFvals) {
         str += "<h3>Documento " + String(i+1) + "</h3> <br> <table class=\"tablebackground\">";
         str += `<tr class="cabecera"><th>ID </th><th>Nombre </th><th>TF </th><th>IDF </th><th>TF-IDF </th></tr>`;
         for(let j = 0; j < docs[i].length; j++) {
+            let indexlist = "[";
+            let auxarr = [];  
+            for(let k = 0; k < inputDocs[i].length; k++) {
+                
+                if(docs[i][j] == inputDocs[i][k]) {
+                    auxarr.push(k);
+                }
+            }
+            indexlist += auxarr.join(",");
+            indexlist += "]";
             let tfval = TFvals[i][TFvals[i].findIndex((e) => e[0] == docs[i][j])];
             let tfidfval = TF_IDFvals[i][TF_IDFvals[i].findIndex((e) => e[0] == docs[i][j])];
             str += `<tr>`
-            str += `<th> ${termList[docs[i][j]]} </th>`;
+            str += `<th> ${indexlist} </th>`;
             str += `<th> ${docs[i][j]} </th>`;
             str += `<th> ${tfval[1]} </th>`;
             str += `<th> ${Number(IDFvals[docs[i][j]])} </th>`;
@@ -237,6 +249,32 @@ function drawTables(divid, inputDocs, termList, TFvals, IDFvals, TF_IDFvals) {
     document.getElementById(divid).innerHTML = str;
 }
 
+function calculateSimilarities(TF_IDFvals) {
+    let lg = TF_IDFvals.length
+    let result = [];
+    result.length = lg;
+    for(let i = 0; i < lg; i++) {
+        result[i] = []
+        result[i].length = lg;
+        result[i].fill("");
+    }
+    
+    for (let i = 0; i < lg; i++) {
+        for (let j = 0; j <= i; j++) {
+            if(i == j) {
+                result[i][j] = "-"
+            } else {
+                result[i][j] = adjCos(TF_IDFvals[i], TF_IDFvals[j]);
+                result[j][i];
+            }
+        }
+    }
+    console.log(result)
+}
+
+function adjCos() {
+
+}
 
 // CONSTANTES
 
