@@ -37,7 +37,6 @@ document.addEventListener("DOMContentLoaded", (_) => {
                 mod = parseStopwords(mod, stepwords[swIndex]);
                 mod = stemDocuments(mod, stemdict[swIndex]);
                 rawdocs = stemDocuments(rawdocs, stemdict[swIndex]);
-                indexTerms(mod);
                 termList = indexTerms(mod);
                 TFvals = TF(mod);
                 IDFvals = IDF(mod, termList);
@@ -271,7 +270,7 @@ function calculateSimilarities(TF_IDFvals) {
     for (let i = 0; i < lg; i++) {
         for (let j = 0; j <= i; j++) {
             if(i == j) {
-                result[i][j] = "-"
+                result[i][j] = "1"
             } else {
                 result[i][j] = String(adjCos(TF_IDFvals[i], TF_IDFvals[j]));
                 result[j][i] = result [i][j];
